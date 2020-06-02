@@ -14,6 +14,7 @@
     import "echarts/lib/chart/scatter"
     import "echarts/lib/component/legend"
     import "echarts/lib/component/title"
+    import "echarts/lib/component/tooltip"
     export default{
         components:{
             'v-chart':ECharts,
@@ -22,7 +23,7 @@
           return{
               chart1: {
                   legend: {},
-                  tooltip: {},
+                  tooltip: {show:'true', trigger:'item'},
                   title:{
                       text:"各茶叶历年销货量"
                   },

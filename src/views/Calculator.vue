@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper">
-        <button class="routerLink"><router-link to="/echarts">跳转至echarts</router-link></button>
+        <button class="routerLink"><router-link to="/zrender">跳转至zrender</router-link></button>
         <div class="result" >
             <div class="history" v-if="historyInput">{{historyInput}}</div>
             <div v-if="result">{{`=${this.result}`}}</div>
@@ -16,15 +16,17 @@
 </template>
 
 <script>
+    const numberString='0123456789';
+    const operatorString='+-*/%';
+    const numberStack=[];
     export default {
+        numberString,
+        operatorString,
+        numberStack,
         data(){
             return{
                 inputButton:['%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.'],
-                operatorString :'+-*/%',
-                numberString:'0123456789',
                 suffixExpression:'',
-                numberStack:[],
-                operatorStack:[],
                 historyInput:'',
                 currentOutput:'0',
                 result:'',
@@ -32,35 +34,36 @@
         },
         methods:{
             onInputCount: function (e) {
+                this.result='';
                 const input = e.target.textContent;
                 const length = this.currentOutput.length;
                 if (this.currentOutput.length === 16) {
                     return
                 }
                 if (this.currentOutput === '0') {
-                    if (this.numberString.includes(input)) {
+                    if (numberString.includes(input)) {
                         this.currentOutput = input;
-                    } else if (this.operatorString.includes(input)|| input==='.') {
+                    } else if (operatorString.includes(input)|| input==='.') {
                         this.currentOutput += input;
                     }
                     return;
                 }
                 if(this.currentOutput[length-1]==='0'){
                         for(let i=length-1; i>=0;i--){
-                            if(this.operatorString.includes(this.currentOutput[i])){
+                            if(operatorString.includes(this.currentOutput[i])){
                                 return;
                             }
                         }
                 }
-                if(this.operatorString.includes(this.currentOutput[length-1]) && input==='.'){return;}
+                if(operatorString.includes(this.currentOutput[length-1]) && input==='.'){return;}
                 if(this.currentOutput.includes('.') && input==='.'){
                     // eslint-disable-next-line no-useless-escape
                     if(!(this.currentOutput.slice(this.currentOutput.lastIndexOf('.')).match(/\+[0-9]|\-[0-9]|\*[0-9]|\/[0-9]|\%[0-9]?/))){
                         return;
                     }
                 }
-                if (this.operatorString.includes(input)){
-                    if (this.operatorString.includes(this.currentOutput[length-1])||this.currentOutput.endsWith('.')){
+                if (operatorString.includes(input)){
+                    if (operatorString.includes(this.currentOutput[length-1])||this.currentOutput.endsWith('.')){
                         return;
                     }
                 }
@@ -70,26 +73,26 @@
                 if(this.currentOutput==='0'){return}
                 this.toRPolish(this.currentOutput);
                 this.suffixExpression.forEach((e)=>{
-                   if(!(this.operatorString.includes(e))){
-                       this.numberStack.push(e);
+                   if(!(operatorString.includes(e))){
+                       numberStack.push(e);
                    } else {
-                       const number1=parseFloat(this.numberStack.pop());
-                       const number2=parseFloat(this.numberStack.pop());
+                       const number1=parseFloat(numberStack.pop());
+                       const number2=parseFloat(numberStack.pop());
                        let sum=0;
                        switch (e) {
                             case '+':{
                                sum=number1+number2;
-                               this.numberStack.push(sum);
+                               numberStack.push(sum);
                                break
                            }
                            case '-':{
                                sum=number2-number1;
-                               this.numberStack.push(sum);
+                               numberStack.push(sum);
                                break
                            }
                            case '*':{
                                sum=number1*number2;
-                               this.numberStack.push(sum);
+                               numberStack.push(sum);
                                break
                            }
                            case '/':{
@@ -99,7 +102,7 @@
                                    break;
                                }
                                sum=number2/number1;
-                               this.numberStack.push(sum);
+                               numberStack.push(sum);
                                break;
                            }
                            case '%':{
@@ -114,14 +117,19 @@
                                    break;
                                }
                                sum=number2%number1;
-                               this.numberStack.push(sum);
+                               numberStack.push(sum);
                                break;
                            }
                        }
                    }
                });
-                this.result=this.numberStack.pop();
-                this.currentOutput='0';
+                this.result=numberStack.pop();
+                if (this.result){
+                    this.currentOutput=this.result.toString();
+                }else{
+                    this.currentOutput='0';
+                }
+
                 this.suffixExpression=[];
             },
             onClear:function () {
@@ -131,6 +139,7 @@
             },
             onDeleteCount:function () {
                 if(this.currentOutput.length>1){
+                    if(this.result){return}
                     this.currentOutput=this.currentOutput.substring(0, this.currentOutput.length - 1);
                 }else {
                     this.currentOutput='0';
@@ -141,13 +150,13 @@
                 const S1=[]; //操作数栈
                 const S2=[]; //运算符栈
                 let flag=true;
-                if(this.operatorString.includes(input[input.length-1])){
+                if(operatorString.includes(input[input.length-1])){
                     input=input.substring(0, input.length - 1);
                 }
                 for (let i =0 ;i<input.length;i++){
-                    if(this.numberString.includes(input[i])){
+                    if(numberString.includes(input[i])){
                         for(let j =i;j<input.length;j++){
-                            if(this.operatorString.includes(input[j])){
+                            if(operatorString.includes(input[j])){
                                 S1.push(input.slice(i,j));
                                 if (S2.length===0 || !this.toCompareOperator(S2[S2.length-1],input[j])){
                                     S2.push(input[j]);
